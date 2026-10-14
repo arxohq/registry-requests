@@ -1,0 +1,4 @@
+# Prefixes held by external publishers. The first accepted request with a new
+# prefix claims it for the owner of its source repository; later requests with
+# that prefix are accepted only from repositories of the same owner.
+# Written by the acceptance workflow; edited by hand only by a maintainer.

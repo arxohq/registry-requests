@@ -1,0 +1,65 @@
+# Machine checks of a request pull request. No secrets: the token is read-only,
+# nothing is published or stored. The tools, schema and prefix lists are taken
+# from the BASE branch; only requests/<name>-<version>/request.json comes from
+# the pull request. The result is the required status of the pull request; the
+# report is posted as a comment by report-request.yml.
+name: check-request
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: trusted tools (base branch)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+      - name: pull request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "jsonschema==4.23.0"
+      - name: pinned scripts and tests of the trusted tools
+        run: |
+          python3 trusted/tools/check_vendor.py
+          python3 -m unittest discover -s trusted/tools -p 'test_*.py'
+      - name: pinned law
+        run: |
+          LAW=$(python3 trusted/tools/toolchain.py install --out "$RUNNER_TEMP/law-tools")
+          "$LAW" --version
+          echo "LAW_BIN=$LAW" >> "$GITHUB_ENV"
+      - name: check the request
+        run: |
+          mkdir -p "$RUNNER_TEMP/report"
+          echo "${{ github.event.pull_request.number }}" > "$RUNNER_TEMP/report/pr-number"
+          python3 trusted/tools/intake.py check \
+            --base "${{ github.event.pull_request.base.sha }}" \
+            --pr-root pr \
+            --law "$LAW_BIN" \
+            --work "$RUNNER_TEMP/intake" \
+            --report "$RUNNER_TEMP/report/report.md"
+      - name: keep the report for the comment workflow
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: intake-report
+          path: ${{ runner.temp }}/report
+          if-no-files-found: ignore

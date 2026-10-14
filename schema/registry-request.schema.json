@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://law.arxo.io/schema/registry-request.schema.json",
+  "title": "Arxo registry request",
+  "description": "A request by an external author to add released packages to the public Arxo registry. The request names the files of `law pack` artifacts by sha256 and size; the bytes themselves are assets of a GitHub Release in the author's public repository. A maintainer approves exactly the hashes named here; after acceptance the bytes are copied under Arxo's control and published by the registry job.",
+  "$comment": "DECISION-0476 §3 п. 2; строки packages — те же, что пишет law publish --candidate (arxo.registry-candidate/1, DECISION-0376). Печатает law publish --request.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "license", "packages"],
+  "properties": {
+    "schema": {
+      "const": "arxo.registry-request/1",
+      "description": "Request format."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "release", "commit"],
+      "description": "Where the bytes are: the author's public GitHub repository, the Release tag carrying the assets and the commit the tag points to. The commit records provenance; the bytes are checked by sha256 only.",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$",
+          "description": "Public GitHub repository as owner/repo."
+        },
+        "release": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^/\\s]+$",
+          "description": "Tag of the Release whose assets are the files listed in packages."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Commit the release tag points to."
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9.+:() -]+$",
+      "description": "SPDX license identifier or expression of the published packages. A request without a license is not accepted."
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One row per file of every artifact in the request, release.json included. Several packages may travel together when one depends on another.",
+      "items": {
+        "$ref": "#/$defs/FileRow"
+      }
+    }
+  },
+  "$defs": {
+    "FileRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "file", "path", "bytes", "sha256"],
+      "description": "A file of a packed release.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$",
+          "description": "Package name."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]*$",
+          "description": "Exact package version."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[^/\\\\\\s]+$",
+          "description": "Release asset name: a single file name, <name>-<version>.<path with dots>."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Relative path of the file inside the packed artifact; no absolute paths and no `..` segments."
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 of the file."
+        }
+      }
+    }
+  }
+}

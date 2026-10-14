@@ -1,0 +1,13 @@
+{
+  "format": "arxo.vendored-files/1",
+  "source": {
+    "repository": "arxo-io/law (Arxo Law monorepo, private)",
+    "commit": "aa36a701d3b1996ea6f60c5bce53dadc04433b77",
+    "directory": "apps/delivery"
+  },
+  "rule": "Copies are byte-for-byte; never edited here. A refresh replaces both files from one commit of the source and updates this file; tools/check_vendor.py verifies the hashes.",
+  "files": {
+    "candidate.py": "1e72f3c141d211f0ed84673b56ce769deb53ea3c03b19bcdb4654381df892f6d",
+    "registry_candidate.py": "61b2df660223ed31fd5eaef048342d421f2cc8a05e555a45b9343f27a30d5028"
+  }
+}

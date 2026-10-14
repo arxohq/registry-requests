@@ -1,0 +1,73 @@
+# Acceptance of merged requests. Merging a pull request approves exactly the
+# sha256 named by its request.json. This job re-downloads and re-checks the
+# bytes, stores them as a Release of this repository (accepted/<name>@<version>,
+# never overwritten), commits the candidate and the prefix claim, and publishes
+# into arxohq/registry with the pinned law and a fast-forward push.
+#
+# Secret (set by the owner): REGISTRY_DEPLOY_KEY — private half of a deploy key
+# with write access to arxohq/registry.
+name: accept-request
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/**/request.json"
+  workflow_dispatch:
+    inputs:
+      before:
+        description: "accept requests added after this commit"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-registry
+  cancel-in-progress: false
+
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "jsonschema==4.23.0"
+      - name: pinned scripts
+        run: python3 tools/check_vendor.py
+      - name: pinned law
+        run: |
+          LAW=$(python3 tools/toolchain.py install --out "$RUNNER_TEMP/law-tools")
+          "$LAW" --version
+          echo "LAW_BIN=$LAW" >> "$GITHUB_ENV"
+      - name: registry deploy key
+        env:
+          REGISTRY_DEPLOY_KEY: ${{ secrets.REGISTRY_DEPLOY_KEY }}
+        run: |
+          [ -n "$REGISTRY_DEPLOY_KEY" ] || { echo "REGISTRY_DEPLOY_KEY is not set"; exit 1; }
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$REGISTRY_DEPLOY_KEY" > "$HOME/.ssh/registry_deploy_key"
+          chmod 600 "$HOME/.ssh/registry_deploy_key"
+          ssh-keyscan github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          echo "GIT_SSH_COMMAND=ssh -i $HOME/.ssh/registry_deploy_key -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
+      - name: accept, store and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          before="${{ inputs.before || github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            before=$(git rev-list --max-parents=0 HEAD | tail -1)
+          fi
+          python3 tools/intake.py accept \
+            --before "$before" \
+            --law "$LAW_BIN" \
+            --work "$RUNNER_TEMP/accept" \
+            --registry-remote git@github.com:arxohq/registry.git \
+            --report "$RUNNER_TEMP/accept-report.md"
+      - name: report
+        if: always()
+        run: cat "$RUNNER_TEMP/accept-report.md" >> "$GITHUB_STEP_SUMMARY" || true
