@@ -85,6 +85,17 @@ def check_relative_path(path: str, where: str) -> str:
     return path
 
 
+def is_tag(tag: str) -> bool:
+    """Имя git-тега Release: допускаются `/`-сегменты (`accepted/<name>@<version>`,
+    DECISION-0476 §3 п. 6), но не пустые и не `.`/`..`-сегменты, не `@{`,
+    не пробелы и управляющие символы, не `\\` и `:` — правила git check-ref-format."""
+    if not tag or tag.startswith("/") or tag.endswith("/") or tag.endswith(".lock"):
+        return False
+    if any(c.isspace() or ord(c) < 32 or c in '\\:?*[~^' for c in tag) or "@{" in tag or ".." in tag:
+        return False
+    return all(part and not part.startswith(".") for part in tag.split("/"))
+
+
 def _assets(manifest: dict, where: str) -> dict:
     assets = manifest.get("assets", {})
     if assets is None:
@@ -98,7 +109,7 @@ def _assets(manifest: dict, where: str) -> dict:
                 raise CandidateError(f"{where}: assets.{key} не непустая строка")
     if "repository" in assets and not REPOSITORY.fullmatch(assets["repository"]):
         raise CandidateError(f"{where}: assets.repository {assets['repository']!r} не owner/repo")
-    if "release" in assets and ("/" in assets["release"] or any(c.isspace() for c in assets["release"])):
+    if "release" in assets and not is_tag(assets["release"]):
         raise CandidateError(f"{where}: assets.release {assets['release']!r} не тег")
     return assets
 
