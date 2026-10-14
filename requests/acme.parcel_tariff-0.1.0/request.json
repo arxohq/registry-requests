@@ -1,0 +1,43 @@
+{
+  "license": "Apache-2.0",
+  "packages": [
+    {
+      "bytes": 1158,
+      "file": "acme.parcel_tariff-0.1.0.law.lock",
+      "name": "acme.parcel_tariff",
+      "path": "law.lock",
+      "sha256": "92b694606fed873249ff51318c8f59bc0018b687e4cedb77482266bac5ab7b31",
+      "version": "0.1.0"
+    },
+    {
+      "bytes": 2405,
+      "file": "acme.parcel_tariff-0.1.0.package.lawir.json",
+      "name": "acme.parcel_tariff",
+      "path": "package.lawir.json",
+      "sha256": "a126c314402c639619e9b7f8fda87373fb9cd2532fa6104f9ceae5fec8ade0a6",
+      "version": "0.1.0"
+    },
+    {
+      "bytes": 127391,
+      "file": "acme.parcel_tariff-0.1.0.world.lawir.json",
+      "name": "acme.parcel_tariff",
+      "path": "world.lawir.json",
+      "sha256": "89d3b60104dc3b3536c91fb001c28ccb4519c1abadad2f106c619ad89753cc54",
+      "version": "0.1.0"
+    },
+    {
+      "bytes": 1096,
+      "file": "acme.parcel_tariff-0.1.0.release.json",
+      "name": "acme.parcel_tariff",
+      "path": "release.json",
+      "sha256": "1b7af561f7f5603176f91a8d01b0955c7b305341fc8d6447068e0c3968a0f6ad",
+      "version": "0.1.0"
+    }
+  ],
+  "schema": "arxo.registry-request/1",
+  "source": {
+    "commit": "9b4d467a53126e6d535fbcb4e3830a445f10b9ea",
+    "release": "parcel-tariff-0.1.0",
+    "repository": "rifmj/acme-parcel-tariff"
+  }
+}
