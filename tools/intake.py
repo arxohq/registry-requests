@@ -234,8 +234,10 @@ def run(command: list[str], report: Report, cwd: Path | None = None, check: bool
     report.lines.append("$ " + " ".join(command))
     report.lines += [line for line in (proc.stdout + proc.stderr).splitlines() if line.strip()][-40:]
     if check and proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout).strip().splitlines()
-        raise IntakeError(f"`{Path(command[0]).name} {' '.join(command[1:3])}` failed: {tail[-1] if tail else proc.returncode}")
+        lines = (proc.stdout + "\n" + proc.stderr).strip().splitlines()
+        coded = [line.strip() for line in lines if "REFUSAL" in line or "LPK-" in line or "LDC-" in line]
+        reason = coded[0] if coded else (lines[-1].strip() if lines else str(proc.returncode))
+        raise IntakeError(f"`{Path(command[0]).name} {' '.join(command[1:3])}` failed: {reason}")
     return proc
 
 
