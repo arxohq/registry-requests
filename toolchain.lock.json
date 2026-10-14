@@ -1,0 +1,18 @@
+{
+  "format": "arxo.registry-intake-toolchain/1",
+  "tool": "@arxo/cli",
+  "version": "0.2.6",
+  "note": "The law binary of @arxo/cli 0.2.6 from the public npm registry, pinned by tarball and binary sha256. The same binary for every check and every publication; raise it only by a reviewed change of this file.",
+  "platforms": {
+    "linux-x64": {
+      "tarball": "https://registry.npmjs.org/@arxo/cli-linux-x64/-/cli-linux-x64-0.2.6.tgz",
+      "tarballSha256": "33f464372428e9bb8958e068ac2c5c95e2f4a45a95f813b19f892d30ef8ad23b",
+      "binarySha256": "87cc7aba0d46ed96df56f0cfa3156fcc0dc81ffa6a30d358b950b42c73527c58"
+    },
+    "darwin-arm64": {
+      "tarball": "https://registry.npmjs.org/@arxo/cli-darwin-arm64/-/cli-darwin-arm64-0.2.6.tgz",
+      "tarballSha256": "cdcb57b00efe168d854157ca112a0de87775f816e4abfddc3895b253dc6c94da",
+      "binarySha256": "649d15da040d05f6cc762a59055088a129264d7d36ac38e85de79a09f4eed10e"
+    }
+  }
+}
