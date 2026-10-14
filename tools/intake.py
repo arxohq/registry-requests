@@ -49,7 +49,8 @@ import registry_candidate  # noqa: E402  (pinned copy, see tools/vendor/VENDORED
 SCHEMA_FILE = ROOT / "schema" / "registry-request.schema.json"
 REQUEST_SCHEMA = "arxo.registry-request/1"
 CANDIDATE_SCHEMA = "arxo.registry-candidate/1"
-INTAKE_REPOSITORY = "arxohq/registry-requests"
+#: This repository; GITHUB_REPOSITORY in Actions (a staging copy rehearses with its own name).
+INTAKE_REPOSITORY = os.environ.get("GITHUB_REPOSITORY") or "arxohq/registry-requests"
 PUBLIC_REGISTRY = "https://github.com/arxohq/registry.git"
 REGISTRY_ID = "arxo"
 #: One release asset (GitHub allows 2 GiB; a package file is far smaller).
