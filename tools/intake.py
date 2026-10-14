@@ -391,7 +391,10 @@ def write_candidate(name: str, version: str, rows: list[dict], tag: str) -> Path
 def claim_prefixes(prefixes: list[str], owner: str, request_path: str) -> None:
     path = ROOT / "prefixes.toml"
     text = path.read_text(encoding="utf-8")
+    held = tomllib.loads(text).get("prefix", {})
     for prefix in prefixes:
+        if prefix in held:
+            continue
         text += f'\n[prefix.{prefix}]\nowner = "{owner}"\nfirst = "{request_path}"\n'
     path.write_text(text, encoding="utf-8")
 
@@ -424,9 +427,12 @@ def cmd_accept(args: argparse.Namespace) -> int:
         for path in added:
             report.request = path
             name, version = REQUEST_PATH.fullmatch(path).groups()
-            if (ROOT / "candidates" / f"{name}-{version}.json").exists():
-                report.lines.append(f"{path}: already accepted")
+            existing = ROOT / "candidates" / f"{name}-{version}.json"
+            if existing.exists() and json.loads(existing.read_text(encoding="utf-8")).get("published"):
+                report.lines.append(f"{path}: already accepted and published")
                 continue
+            # A candidate without `published` is an interrupted acceptance: resume it.
+            # Every step below is idempotent (the stored Release is compared, not replaced).
             work = args.work / f"{name}-{version}"
             if work.exists():
                 shutil.rmtree(work)
@@ -440,9 +446,10 @@ def cmd_accept(args: argparse.Namespace) -> int:
             owner = request["source"]["repository"].split("/", 1)[0]
             claim_prefixes(new_prefixes, owner, path)
             git(["add", "candidates", "prefixes.toml"], report)
-            git(["-c", "user.name=arxo registry intake", "-c", "user.email=hi@arxo.io",
-                 "commit", "-m", f"accept {name}@{version} from {request['source']['repository']}"], report)
-            push_with_retry(ROOT, "main", report)
+            if git(["diff", "--cached", "--quiet"], report, check=False).returncode != 0:
+                git(["-c", "user.name=arxo registry intake", "-c", "user.email=hi@arxo.io",
+                     "commit", "-m", f"accept {name}@{version} from {request['source']['repository']}"], report)
+                push_with_retry(ROOT, "main", report)
             # 4. Publish from the accepted Release (not from the author's) into the registry.
             candidate_path = ROOT / "candidates" / f"{name}-{version}.json"
             fetched = work / "accepted-bytes"
